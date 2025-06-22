@@ -1,51 +1,56 @@
 package pages;
 
 import com.microsoft.playwright.*;
+import dto.User;
 
 public class LoginPage {
     private final Page page;
-
     private final Locator emailInput;
-    private  final Locator passwordInput;
+    private final Locator passwordInput;
     private final Locator loginButton;
-    private  final Locator errorMessage;
+    private final Locator errorMessage;
 
     public LoginPage(Page page) {
         this.page = page;
-
         this.emailInput = page.locator("input[formcontrolname='userName']");
         this.passwordInput = page.locator("input[formcontrolname='password']");
         this.loginButton = page.locator("button:has-text('התחברות')");
         this.errorMessage = page.locator("text=אימייל או סיסמה לא נכונים");
     }
 
-    public void navigate() {
-        page.navigate("https://sender.getpackage.com/login");
+    public void navigate(String url) {
+        page.navigate(url);
         page.locator("text=כתובת אימייל וסיסמה").click();
     }
 
-    public void enterEmail(String email) {
-        emailInput.fill(email);
-    }
-
-    public void enterPassword(String password) {
-        passwordInput.fill(password);
-    }
-
-    public void submit() {
+    // Просто логин (без ожидания перехода)
+    public void login(User user) {
+        emailInput.fill(user.email);
+        passwordInput.fill(user.password);
         loginButton.click();
+    }
+
+    // Логин + ожидание доставки, возвращает DeliveryPage
+    public DeliveryPage loginAndGoToDelivery(User user) {
+        login(user);
+        page.waitForURL("**/delivery", new Page.WaitForURLOptions().setTimeout(5000));
+        return new DeliveryPage(page);
+    }
+
+    public void waitForErrorMessage() {
+        errorMessage.waitFor(new Locator.WaitForOptions().setTimeout(5000));
     }
 
     public String getErrorText() {
         return errorMessage.textContent();
     }
 
-    public boolean isAtDeliveryPage() {
-        return page.url().contains("/delivery");
-    }
-
     public Page getPage() {
         return this.page;
+    }
+
+    public boolean isAtDeliveryPage() {
+        return page.url().contains("/delivery");
     }
 
 }

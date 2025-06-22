@@ -1,4 +1,4 @@
-tests/LoginCrossBrowserTest.class
 tests/MobileLoginTest.class
-pages/LoginPage.class
 tests/LoginTest.class
+tests/LoginCrossBrowserTest.class
+pages/LoginPage.class

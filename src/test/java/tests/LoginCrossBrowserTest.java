@@ -2,6 +2,8 @@ package tests;
 
 import com.microsoft.playwright.*;
 import org.junit.jupiter.api.*;
+import config.ConfigReader;
+import dto.User;
 import pages.LoginPage;
 
 import java.util.function.Consumer;
@@ -10,10 +12,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class LoginCrossBrowserTest {
     static Playwright playwright;
+    static ConfigReader config;
 
     @BeforeAll
     static void setupPlaywright() {
         playwright = Playwright.create();
+        config = new ConfigReader();
     }
 
     @AfterAll
@@ -46,26 +50,22 @@ public class LoginCrossBrowserTest {
     @Test
     void loginWithValidDataChromium() {
         runWithBrowser("chromium", loginPage -> {
-            loginPage.navigate();
-            loginPage.enterEmail("lina2001smirnova@gmail.com");
-            loginPage.enterPassword("Qwerty123");
-            loginPage.submit();
+            loginPage.navigate(config.get("base.url"));
+            User user = new User(config.get("valid.email"), config.get("valid.password"));
+            loginPage.login(user);
 
             loginPage.getPage().waitForURL("**/delivery");
-
             assertTrue(loginPage.isAtDeliveryPage());
-
-
         });
     }
 
     @Test
     void loginWithInvalidEmailFirefox() {
         runWithBrowser("firefox", loginPage -> {
-            loginPage.navigate();
-            loginPage.enterEmail("wrong@email.com");
-            loginPage.enterPassword("Qwerty123");
-            loginPage.submit();
+            loginPage.navigate(config.get("base.url"));
+            User user = new User(config.get("invalid.email"), config.get("valid.password"));
+            loginPage.login(user);
+
             assertTrue(loginPage.getErrorText().contains("אימייל או סיסמה לא נכונים"));
         });
     }
@@ -73,15 +73,11 @@ public class LoginCrossBrowserTest {
     @Test
     void loginWithInvalidPasswordWebkit() {
         runWithBrowser("webkit", loginPage -> {
-            loginPage.navigate();
-            loginPage.enterEmail("lina2001smirnova@gmail.com");
-            loginPage.enterPassword("WrongPassword123");
-            loginPage.submit();
+            loginPage.navigate(config.get("base.url"));
+            User user = new User(config.get("valid.email"), config.get("invalid.password"));
+            loginPage.login(user);
+
             assertTrue(loginPage.getErrorText().contains("אימייל או סיסמה לא נכונים"));
         });
     }
 }
-
-
-
-

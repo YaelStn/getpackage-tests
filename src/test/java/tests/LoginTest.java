@@ -1,81 +1,56 @@
 package tests;
 
-import com.microsoft.playwright.*;
-import org.junit.jupiter.api.*;
+import config.ConfigReader;
+import dto.User;
+import org.junit.jupiter.api.Test;
+import pages.DeliveryPage;
 import pages.LoginPage;
 
-public class LoginTest {
-    static Playwright playwright;
-    static Browser browser;
-    BrowserContext context;
-    Page page;
-    LoginPage loginPage;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-    @BeforeAll
-    static void launchPlaywright() {
-        playwright = Playwright.create();
-        browser = playwright.chromium().launch(
-                new BrowserType.LaunchOptions().setHeadless(false)
-        );
-    }
-
-    @BeforeEach
-    void createContextAndPage() {
-        context = browser.newContext();
-        page = context.newPage();
-        loginPage = new LoginPage(page);
-    }
-
+public class LoginTest extends BaseTest {
 
     @Test
-    void testPageOpens() {
-        loginPage.navigate();
-        Assertions.assertTrue(page.url().contains("login"));
+    void loginWithValidCredentials() {
+        LoginPage loginPage = new LoginPage(page);
+        loginPage.navigate(ConfigReader.get("base.url"));
+
+        User user = new User(
+                ConfigReader.get("valid.email"),
+                ConfigReader.get("valid.password")
+        );
+
+        DeliveryPage deliveryPage = loginPage.loginAndGoToDelivery(user);
+        assertTrue(deliveryPage.isOpen());
     }
 
     @Test
     void loginWithInvalidEmail() {
-        loginPage.navigate();
-        loginPage.enterEmail("wrong@email.com");
-        loginPage.enterPassword("Qwerty123");
-        loginPage.submit();
+        LoginPage loginPage = new LoginPage(page);
+        loginPage.navigate(ConfigReader.get("base.url"));
 
-        Assertions.assertTrue(loginPage.getErrorText().contains("אימייל או סיסמה לא נכונים"));
+        User user = new User(
+                ConfigReader.get("invalid.email"),
+                ConfigReader.get("valid.password")
+        );
+
+        loginPage.login(user);
+        loginPage.waitForErrorMessage();
+        assertTrue(loginPage.getErrorText().contains("אימייל או סיסמה לא נכונים"));
     }
 
     @Test
     void loginWithInvalidPassword() {
-        loginPage.navigate();
-        loginPage.enterEmail("lina2001smirnova@gmail.com");
-        loginPage.enterPassword("WrongPassword123");
-        loginPage.submit();
+        LoginPage loginPage = new LoginPage(page);
+        loginPage.navigate(ConfigReader.get("base.url"));
 
-        Assertions.assertTrue(loginPage.getErrorText().contains("אימייל או סיסמה לא נכונים"));
+        User user = new User(
+                ConfigReader.get("valid.email"),
+                ConfigReader.get("invalid.password")
+        );
+
+        loginPage.login(user);
+        loginPage.waitForErrorMessage();
+        assertTrue(loginPage.getErrorText().contains("אימייל או סיסמה לא נכונים"));
     }
-
-    @Test
-    void loginWithValidData() {
-        loginPage.navigate();
-        loginPage.enterEmail("lina2001smirnova@gmail.com");
-        loginPage.enterPassword("Qwerty123");
-        loginPage.submit();
-
-        page.waitForURL("**/delivery");
-
-        Assertions.assertTrue(loginPage.isAtDeliveryPage());
-    }
-
-
-
-    @AfterEach
-    void closeContext() {
-        context.close();
-    }
-
-    @AfterAll
-    static void closePlaywright() {
-        browser.close();
-        playwright.close();
-    }
-
 }
