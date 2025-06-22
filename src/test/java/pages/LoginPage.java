@@ -23,14 +23,12 @@ public class LoginPage {
         page.locator("text=כתובת אימייל וסיסמה").click();
     }
 
-    // Просто логин (без ожидания перехода)
     public void login(User user) {
         emailInput.fill(user.email);
         passwordInput.fill(user.password);
         loginButton.click();
     }
 
-    // Логин + ожидание доставки, возвращает DeliveryPage
     public DeliveryPage loginAndGoToDelivery(User user) {
         login(user);
         page.waitForURL("**/delivery", new Page.WaitForURLOptions().setTimeout(5000));
